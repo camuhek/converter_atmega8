@@ -1,5 +1,6 @@
 ;***************************ПОЛЕЗНЫЕ ССЫЛКИ***************************
 ;https://radioparty.ru/programming/avr/c/258-lcd-avr-lesson1 
+;https://dims.petrsu.ru/posob/avrlab/avrasm-rus.htm
 ;*********************************************************************
 
 .device ATmega8
@@ -38,6 +39,14 @@
    pop r16
 .endm
 
+.macro multiplay10
+   push r16
+   ldi r16,10
+   mul numb,r16
+   movw numb,r0
+   pop r16
+.endm
+
 .macro Set_cursor
    push r16 ;чтобы не думать о сохранности temp
    ldi r16,(1<<7)|(@0<<6)+@1;курсор строка @0(0-1) позиция @1(0-15)
@@ -58,8 +67,7 @@ RESET:
 
 Main:
    rcall init_LCD 
-   lcd_out '1'
-   lcd_out '2'
+   rcall LCD_mod_gui
 loop:
    IN  r16,PIND
    
@@ -198,11 +206,26 @@ LCD_data:
    rcall Del_150mks
 ret
 
-LCD_gui:
+LCD_mod_gui:
    ldi r16,0x01
-   rcall LCD_command
+   rcall LCD_command_4bit
    
-   
+   set_cursor 0,0
+   lcd_out 'A'
+   lcd_out '4'
+   lcd_out '-'
+   lcd_out 't'
+   lcd_out 'o'
+   lcd_out '2'
+   lcd_out ' '
+   lcd_out ' '
+   lcd_out 'B'
+   lcd_out '4'
+   lcd_out '-'
+   lcd_out 't'
+   lcd_out 'o'
+   lcd_out '1'
+   lcd_out '6'  
 ret
 
 
@@ -255,7 +278,6 @@ ret
 ;*********************************** KEYPAD*****************************************
 ;***********************************************************************************
 
-
 line_A:
    SBRC r16,7
       rcall Bdel
@@ -302,46 +324,78 @@ rjmp loop
 
 
 B0:
+   lcd_out '0'
+   multiplay10
 ret
 
 B1:
    lcd_out '1'
+   multiplay10
+   inc numb
 ret
 
 B2:
+   lcd_out '2'
+   multiplay10
+   inc numb
+   inc numb
+ret
 B3:
+   lcd_out '3'
+   multiplay10
+   ldi r16,3
+   add numb,r16
 ret
 
 B4:
    lcd_out '4'
+   multiplay10
+   ldi r16,4
+   add numb,r16
 ret
 
 B5:
    lcd_out '5'
+      multiplay10
+   ldi r16,5
+   add numb,r16
 ret
 
 
 B6:
    lcd_out '6'
+      multiplay10
+   ldi r16,6
+   add numb,r16
 ret
 
 B7:
    lcd_out '7'
+      multiplay10
+   ldi r16,7
+   add numb,r16
 ret
 
 
 B8:
    lcd_out '8'
+      multiplay10
+   ldi r16,8
+   add numb,r16
 ret
 
 B9:
    lcd_out '9'
-   rjmp loop
+      multiplay10
+   ldi r16,9
+   add numb,r16
+ret
    
 Bdel:
-   lcd_out ' '   
-   lcd_out '/'
-   Set_cursor 1,0
+   ldi r16,0x01
+   rcall LCD_command_4bit
+   set_cursor 0,0
+
 ret
 
 
@@ -355,11 +409,26 @@ Beq:
 Badd:
 ret
 
-;1- add 2- mibus 3- x 4- del
+;A4-to2(1) B4-to16(0)
 equal:
+
+
 ret
 
-
+to2:
+   ldi r20,0
+   qwe123:
+      SBRC numb,r20
+	 lcd_out '0'
+      SBRS numb,r20
+	 lcd_out '1'
+      SBRC r20,3
+      rjmp to2_part2
+      inc r20
+   rjmp qwe123
+   to2_part2:
+      ldi numb,0
+ret
 ;**************delay(для 4MHz)****************************************************
 Del_150mks:
 cli 
