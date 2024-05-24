@@ -75,13 +75,13 @@ loop:
    rjmp line_A
 
    SBRC r16,1
-   rcall line_B
+   rjmp line_B
 
    SBRC r16,2
-   rcall line_C
+   rjmp line_C
 
    SBRC r16,3
-   rcall line_D
+   rjmp line_D
    
 rjmp loop
 
@@ -345,6 +345,7 @@ B3:
    multiplay10
    ldi r16,3
    add numb,r16
+   ldi r16,0
 ret
 
 B4:
@@ -352,6 +353,7 @@ B4:
    multiplay10
    ldi r16,4
    add numb,r16
+   ldi r16,0
 ret
 
 B5:
@@ -359,6 +361,7 @@ B5:
       multiplay10
    ldi r16,5
    add numb,r16
+   ldi r16,0
 ret
 
 
@@ -367,6 +370,7 @@ B6:
       multiplay10
    ldi r16,6
    add numb,r16
+   ldi r16,0
 ret
 
 B7:
@@ -374,6 +378,7 @@ B7:
       multiplay10
    ldi r16,7
    add numb,r16
+   ldi r16,0
 ret
 
 
@@ -382,6 +387,7 @@ B8:
       multiplay10
    ldi r16,8
    add numb,r16
+   ldi r16,0
 ret
 
 B9:
@@ -389,13 +395,16 @@ B9:
       multiplay10
    ldi r16,9
    add numb,r16
+   ldi r16,0
 ret
    
 Bdel:
    ldi r16,0x01
    rcall LCD_command_4bit
    set_cursor 0,0
-
+   ldi oper,0
+   
+ldi r16,0
 ret
 
 
@@ -405,7 +414,16 @@ ret
 
 Bmin:
 Bcl:
+ret
+
 Beq:
+   SBRS oper,0
+   rcall to2
+   SBRC oper,0
+   rcall to16
+   ldi r16,0
+ret
+
 Badd:
 ret
 
@@ -415,17 +433,26 @@ equal:
 
 ret
 
+to16:
+ret
+
 to2:
-   ldi r20,0
+   ldi r26,0
    qwe123:
-      SBRC numb,r20
+      SBRS numb,7
 	 lcd_out '0'
-      SBRS numb,r20
+      SBRC numb,7
 	 lcd_out '1'
-      SBRC r20,3
-      rjmp to2_part2
-      inc r20
+	 
+      ldi r16,0b00000111
+      EOR r16,r26
+      BREQ to2_part2
+     
+	 
+      LSL numb
+      inc r26
    rjmp qwe123
+   
    to2_part2:
       ldi numb,0
 ret
