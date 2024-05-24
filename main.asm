@@ -418,7 +418,7 @@ ret
 
 Beq:
    SBRS oper,0
-   rcall to2
+   rjmp to2
    SBRC oper,0
    rcall to16
    ldi r16,0
@@ -441,9 +441,12 @@ to2:
    qwe123:
       SBRS numb,7
 	 lcd_out '0'
+      SBRS numb,7 ;костыль для того что бы бит не был в суперпозиции
+	 rjmp next
+	 
       SBRC numb,7
 	 lcd_out '1'
-	 
+   next:
       ldi r16,0b00000111
       EOR r16,r26
       BREQ to2_part2
@@ -455,7 +458,7 @@ to2:
    
    to2_part2:
       ldi numb,0
-ret
+rjmp loop
 ;**************delay(для 4MHz)****************************************************
 Del_150mks:
 cli 
