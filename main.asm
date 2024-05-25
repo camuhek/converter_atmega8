@@ -31,7 +31,8 @@
    rcall LCD_data
 
    wait_end_out:
-      IN r16,PIND
+      IN r16,PINC
+      andi r16,0b00001111
       ORI r16,0
       BRNE wait_end_out
       
@@ -54,15 +55,15 @@
 .endm
 
 .macro multiplay10
-   ;push r16
+   push r16
    ldi r16,10
    mul numb,r16
    mov numb,r0
-  ; pop r16
+   pop r16
 .endm
 
 .macro Set_cursor
-   push r16 ;чтобы не думать о сохранности temp
+   push r16 
    ldi r16,(1<<7)|(@0<<6)+@1;курсор строка @0(0-1) позиция @1(0-15)
    rcall LCD_command_4bit ;
    rcall Del_5ms
@@ -75,29 +76,51 @@ RESET:
    ldi r16,low(RAMEND)
    out SPL ,r16
    
+   ldi r16,0b00110000
+   out PORTC,r16
+   
    ldi r16,0
    out PORTD,r16
+  
    sei
 
 Main:
    rcall init_LCD 
    rcall LCD_mod_gui
 loop:
-   IN  r16,PIND
+   IN r16,PINC
+   mov r18,r16
+   andi r18,0b00000011
+   andi r16,0b00001100
    
-   SBRC r16,0
+   IN r17,PIND
+   
+   SBRC r17,0
    rjmp line_A
 
-   SBRC r16,1
-   rjmp line_B
-
-   SBRC r16,2
-   rjmp line_C
-
-   SBRC r16,3
-   rjmp line_D
+   
+   ldi r17,1
+   CPSE r17,r18
+   rjmp chek1
+   rcall line_B
+   chek1:
+   
+   ldi r17,2
+   CPSE r17,r18
+   rjmp chek2
+   rcall line_C
+   chek2:
+   
+   ldi r17,3
+   CPSE r17,r18
+   rjmp chek3
+   rcall line_D
+   chek3:
    
 rjmp loop
+
+
+
 
 init_LCD:
    cbr data,E
@@ -293,47 +316,108 @@ ret
 ;***********************************************************************************
 
 line_A:
-   SBRC r16,7
-      rcall Bdel
-   SBRC r16,6
-      rcall B9
-   SBRC r16,5
-      rcall B8
-   SBRC r16,4
-      rcall B7
+   ldi r17,0
+   CPSE r17,r16
+   rjmp chekB7
+   rcall B7
+   chekB7:
+   
+   ldi r17,0b00000100
+   CPSE r17,r16
+   rjmp chekB8
+   rcall B8
+   chekB8:
+   
+   ldi r17,0b00001000
+   CPSE r17,r16
+   rjmp chekB9
+   rcall B9
+   chekB9:
+   
+   ldi r17,0b00001100
+   CPSE r17,r16
+   rjmp chekBdel
+   rcall Bdel
+   chekBdel:
 rjmp loop
 
 line_B:
-   SBRC r16,7
-      rcall Bx
-   SBRC r16,6
-      rcall B6
-   SBRC r16,5
-      rcall B5
-   SBRC r16,4
-      rcall B4
+   ldi r17,0
+   CPSE r17,r16
+   rjmp chekB4
+   rcall B4
+   chekB4:
+   
+   ldi r17,0b00000100
+   CPSE r17,r16
+   rjmp chekB5
+   rcall B5
+   chekB5:
+   
+   ldi r17,0b00001000
+   CPSE r17,r16
+   rjmp chekB6
+   rcall B6
+   chekB6:
+   
+   ldi r17,0b00001100
+   CPSE r17,r16
+   rjmp chekBx
+   rcall Bx
+   chekBx:
+   
+ 
 rjmp loop
 
 line_C:
-   SBRC r16,7
-      rcall Bmin
-   SBRC r16,6
-      rcall B3
-   SBRC r16,5
-      rcall B2
-   SBRC r16,4
-      rcall B1
+
+   ldi r17,0
+   CPSE r17,r16
+   rjmp chekB1
+   rcall B1
+   chekB1:
+   
+   ldi r17,0b00000100
+   CPSE r17,r16
+   rjmp chekB2
+   rcall B2
+   chekB2:
+   
+   ldi r17,0b00001000
+   CPSE r17,r16
+   rjmp chekB3
+   rcall B3
+   chekB3:
+   
+   ldi r17,0b00001100
+   CPSE r17,r16
+   rjmp chekBmin
+   rcall Bmin
+   chekBmin:
+   
 rjmp loop
 
 line_D:
-   SBRC r16,7
-      rcall Badd
-   SBRC r16,6
-      rjmp Beq
-   SBRC r16,5
-      rcall B0
-   SBRC r16,4
-      rcall Bcl
+   ldi r17,0
+   CPSE r17,r16
+   rjmp chekBcl
+   rcall Bcl
+   chekBcl:
+   ldi r17,0b00000100
+   CPSE r17,r16
+   rjmp chekB0
+   rcall B0
+   chekB0:
+   ldi r17,0b00001000
+   CPSE r17,r16
+   rjmp chekBeq
+   rjmp Beq
+   chekBeq:
+   ldi r17,0b00001100
+   CPSE r17,r16
+   rjmp chekBadd
+   rcall Badd
+   chekBadd:
 rjmp loop
 
 
@@ -421,9 +505,8 @@ Bdel:
 ldi r16,0
 ret
 
-
 Bx:
-ldi r16,0x01
+   ldi r16,0x01
    rcall LCD_command_4bit
    set_cursor 0,0
    ldi oper,1
@@ -433,14 +516,25 @@ ret
 
 Bmin:
 Bcl:
-ret
+   ldi r16,0x01
+   rcall LCD_command_4bit
+   rcall LCD_mod_gui
+rjmp loop
 
 Beq:
+Set_cursor 1,0
+lcd_out 'r'
+lcd_out 'e'
+lcd_out 's'
+lcd_out 'u'
+lcd_out 'l'
+lcd_out 't'
+lcd_out ':'
    SBRS oper,0
       rjmp to2
    SBRC oper,0
       rjmp to16
-rjmp loop ;stackoverflow
+rjmp loop
 
 Badd:
 ret
@@ -487,9 +581,6 @@ out16_but:
    lcd_out_reg r17
 ret
 
-
-
-
 to16:
    mov r30,numb
    ANDI r30,0b11110000
@@ -501,14 +592,12 @@ to16:
    rcall buf16
 rjmp loop
 
-
-
 zero:
    lcd_out '0'
 ret
 
 first:
- lcd_out '1'
+   lcd_out '1'
 ret
 
 to2:
