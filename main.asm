@@ -39,12 +39,26 @@
    pop r16
 .endm
 
-.macro multiplay10
+.macro lcd_out_reg
    push r16
+   mov r16,@0
+   rcall LCD_data
+
+   wait_end_out:
+      IN r16,PIND
+      ORI r16,0
+      BRNE wait_end_out
+      
+   rcall Del_5ms
+   pop r16
+.endm
+
+.macro multiplay10
+   ;push r16
    ldi r16,10
    mul numb,r16
-   movw numb,r0
-   pop r16
+   mov numb,r0
+  ; pop r16
 .endm
 
 .macro Set_cursor
@@ -315,7 +329,7 @@ line_D:
    SBRC r16,7
       rcall Badd
    SBRC r16,6
-      rcall Beq
+      rjmp Beq
    SBRC r16,5
       rcall B0
    SBRC r16,4
@@ -409,7 +423,12 @@ ret
 
 
 Bx:
-lcd_out 'x'
+ldi r16,0x01
+   rcall LCD_command_4bit
+   set_cursor 0,0
+   ldi oper,1
+   
+ldi r16,0
 ret
 
 Bmin:
@@ -418,40 +437,93 @@ ret
 
 Beq:
    SBRS oper,0
-   rjmp to2
+      rjmp to2
    SBRC oper,0
-   rcall to16
-   ldi r16,0
-ret
+      rjmp to16
+rjmp loop ;stackoverflow
 
 Badd:
 ret
 
-;A4-to2(1) B4-to16(0)
-equal:
+buf16:
+   ldi r16,0
+   chek_numb:
+   mov r29,r30
+      eor r29,r16
+      BREQ out16_numb
 
+      ldi r17,9
+      eor r17,r16
+      breq chek_but
 
+      inc r16
+   rjmp chek_numb
+
+   chek_but:
+      mov r29,r30
+      eor r29,r16
+      BREQ out16_but
+
+      ldi r17,15
+      eor r17,r16
+      breq en
+
+      inc r16
+   rjmp chek_but
+en:
 ret
 
+out16_numb:
+   ldi r17,0b0110000
+   add r17,r16
+   lcd_out_reg r17
+   
+ret
+
+out16_but:
+   SUBI r16,9
+   ldi r17,0b1100000
+   add r17,r16
+   lcd_out_reg r17
+ret
+
+
+
+
 to16:
+   mov r30,numb
+   ANDI r30,0b11110000
+   swap r30
+   rcall buf16
+
+   mov r30,numb
+   ANDI r30,0b00001111
+   rcall buf16
+rjmp loop
+
+
+
+zero:
+   lcd_out '0'
+ret
+
+first:
+ lcd_out '1'
 ret
 
 to2:
    ldi r26,0
    qwe123:
       SBRS numb,7
-	 lcd_out '0'
-      SBRS numb,7 ;костыль для того что бы бит не был в суперпозиции
-	 rjmp next
-	 
+	rcall zero
+
       SBRC numb,7
-	 lcd_out '1'
+	 rcall first
    next:
       ldi r16,0b00000111
       EOR r16,r26
       BREQ to2_part2
      
-	 
       LSL numb
       inc r26
    rjmp qwe123
@@ -459,6 +531,7 @@ to2:
    to2_part2:
       ldi numb,0
 rjmp loop
+
 ;**************delay(для 4MHz)****************************************************
 Del_150mks:
 cli 
