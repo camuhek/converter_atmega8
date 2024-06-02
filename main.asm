@@ -1,4 +1,4 @@
-;***************************ПОЛЕЗНЫЕ ССЫЛКИ***************************
+;***************************пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ***************************
 ;https://radioparty.ru/programming/avr/c/258-lcd-avr-lesson1 
 ;https://dims.petrsu.ru/posob/avrlab/avrasm-rus.htm
 ;*********************************************************************
@@ -24,6 +24,7 @@
 .def buff = r23
 .def numb = r24
 .def oper = r25
+.def result = r27
 
 .macro lcd_out
    push r16
@@ -64,7 +65,7 @@
 
 .macro Set_cursor
    push r16 
-   ldi r16,(1<<7)|(@0<<6)+@1;курсор строка @0(0-1) позиция @1(0-15)
+   ldi r16,(1<<7)|(@0<<6)+@1;пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ @0(0-1) пїЅпїЅпїЅпїЅпїЅпїЅпїЅ @1(0-15)
    rcall LCD_command_4bit ;
    rcall Del_5ms
    pop r16
@@ -79,8 +80,11 @@ RESET:
    ldi r16,0b00110000
    out PORTC,r16
    
-   ldi r16,0
+   ldi r16,254
    out PORTD,r16
+   
+   ldi r16,0
+   out DDRD,r16
   
    sei
 
@@ -98,7 +102,6 @@ loop:
    SBRC r17,0
    rjmp line_A
 
-   
    ldi r17,1
    CPSE r17,r18
    rjmp chek1
@@ -268,8 +271,8 @@ ret
 
 TWI_Start:
    ldi end,0
-   ldi r16, 0b10100101 // Запускаем старт, TWINT, TWEN, TWIE - разрешаем интерфейс и прерывания,
-   out TWCR, r16 // TWSTA - соответственно стартуем, остальные биты тут = 0
+   ldi r16, 0b10100101 // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, TWINT, TWEN, TWIE - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ,
+   out TWCR, r16 // TWSTA - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ = 0
 ret
 
 TWI:
@@ -277,16 +280,16 @@ cli
    in r16,TWSR 
    andi r16, 0xF8 
 
-   cpi r16, 0x08 // Если 0x08 - Пришли после старта, далее нам надо выкинуть на шину
+   cpi r16, 0x08 // пїЅпїЅпїЅпїЅ 0x08 - пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ
    breq SLAW_Adr 
 
-   cpi r16, 0x18 // Если 0x18 - Пришли после посылки адреса микросхемы с записью, далее 
+   cpi r16, 0x18 // пїЅпїЅпїЅпїЅ 0x18 - пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ 
    breq TWI_SendByte  
 rjmp TWI_Stop
 
 SLAW_Adr:
-   ldi r16, 0x40 // Адрес микросхемы+Запись, бит записи это 0 в самом правом бите
-   out TWDR, r16 // Спуливаем на дата регистр
+   ldi r16, 0x40 // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ+пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ 0 пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+   out TWDR, r16 // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
    ldi r16, 0b10000101 
    out TWCR, r16
 sei 
@@ -515,6 +518,28 @@ ldi r16,0
 ret
 
 Bmin:
+   rcall buf_loop
+   ldi r16,0
+   out PORTB,r16
+   CBI PORTD,1
+
+   mov r16,numb
+   swap r16
+   LSL numb
+   LSL numb
+   or numb,r16
+   out DDRD,r16
+   
+   nop
+   nop
+
+   in result,PINB
+   in r16,PIND
+   andi r16,0b00000010
+   mov oper,r16
+   
+ret
+
 Bcl:
    ldi r16,0x01
    rcall LCD_command_4bit
@@ -530,6 +555,7 @@ lcd_out 'u'
 lcd_out 'l'
 lcd_out 't'
 lcd_out ':'
+mov result,numb
    SBRS oper,0
       rjmp to2
    SBRC oper,0
@@ -537,6 +563,63 @@ lcd_out ':'
 rjmp loop
 
 Badd:
+   rcall buf_loop
+      ldi r16,255
+      out PORTB ,r16
+      out DDRB,result
+      SBI PORTD,1
+
+      mov r16,numb
+      swap r16
+      LSL r16
+      LSL r16
+      
+      LSL numb
+      LSL numb
+      or numb,r16
+      out DDRD,numb
+      
+      SBRC oper,0
+      SBI DDRD,1
+
+      SBRS oper,0
+      CBI DDRD,1
+      
+      rcall Del_500ms
+      
+      ldi r16,0
+      out DDRD,r16
+      out DDRB,r16
+ret
+
+buf_loop:
+ldi numb,0
+   loop2:
+      in r16,PINC
+      andi r16,0b00001111
+
+      ldi r17,0b00001010
+      CPSE r17,r16
+      rjmp not3
+         ldi numb,3
+         rjmp finishLoop2
+      not3:
+
+      ldi r17,0b00000110
+      CPSE r17,r16
+      rjmp not2
+         ldi numb,2
+         rjmp finishLoop2
+      not2:
+
+      ldi r17,0b00000010
+      CPSE r17,r16
+      rjmp not1
+         ldi numb,1
+         rjmp finishLoop2
+      not1:
+   rjmp loop2
+   finishLoop2:
 ret
 
 buf16:
@@ -621,7 +704,7 @@ to2:
       ldi numb,0
 rjmp loop
 
-;**************delay(для 4MHz)****************************************************
+;**************delay(пїЅпїЅпїЅ 4MHz)****************************************************
 Del_150mks:
 cli 
    push	Razr0
