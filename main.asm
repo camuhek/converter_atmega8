@@ -20,6 +20,7 @@
 .def Razr1= r18 
 .def Razr2 = r19 
 
+;define for logic
 .def end = r21
 .def buff = r23
 .def numb = r24
@@ -66,7 +67,7 @@
 .macro Set_cursor
    push r16 
    ldi r16,(1<<7)|(@0<<6)+@1;������ ������ @0(0-1) ������� @1(0-15)
-   rcall LCD_command_4bit ;
+   rcall LCD_command_4bit 
    rcall Del_5ms
    pop r16
 .endm
@@ -271,8 +272,8 @@ ret
 
 TWI_Start:
    ldi end,0
-   ldi r16, 0b10100101 // ��������� �����, TWINT, TWEN, TWIE - ��������� ��������� � ����������,
-   out TWCR, r16 // TWSTA - �������������� ��������, ��������� ���� ��� = 0
+   ldi r16, 0b10100101 
+   out TWCR, r16 
 ret
 
 TWI:
@@ -280,16 +281,16 @@ cli
    in r16,TWSR 
    andi r16, 0xF8 
 
-   cpi r16, 0x08 // ���� 0x08 - ������ ����� ������, ����� ��� ���� �������� �� ����
+   cpi r16, 0x08 
    breq SLAW_Adr 
 
-   cpi r16, 0x18 // ���� 0x18 - ������ ����� ������� ������ ���������� � �������, ����� 
+   cpi r16, 0x18 
    breq TWI_SendByte  
 rjmp TWI_Stop
 
 SLAW_Adr:
-   ldi r16, 0x40 // ����� ����������+������, ��� ������ ��� 0 � ����� ������ ����
-   out TWDR, r16 // ��������� �� ���� �������
+   ldi r16, 0x40 
+   out TWDR, r16 
    ldi r16, 0b10000101 
    out TWCR, r16
 sei 
@@ -395,7 +396,7 @@ line_C:
    ldi r17,0b00001100
    CPSE r17,r16
    rjmp chekBmin
-   rcall Bmin
+   rjmp Bmin
    chekBmin:
    
 rjmp loop
@@ -412,14 +413,14 @@ line_D:
    rcall B0
    chekB0:
    ldi r17,0b00001000
-   CPSE r17,r16
+   CPSE r17,r16   
    rjmp chekBeq
    rjmp Beq
    chekBeq:
    ldi r17,0b00001100
    CPSE r17,r16
    rjmp chekBadd
-   rcall Badd
+   rjmp Badd
    chekBadd:
 rjmp loop
 
@@ -518,6 +519,27 @@ ldi r16,0
 ret
 
 Bmin:
+   ldi r16,0x01
+   rcall LCD_command_4bit
+   Set_cursor 0,0
+
+   lcd_out 'f'
+   lcd_out 'r'
+   lcd_out 'o'
+   lcd_out 'm'
+   lcd_out ' '
+   lcd_out 't'
+   lcd_out 'h'
+   lcd_out 'e'
+   lcd_out ' '
+   lcd_out 'b'
+   lcd_out 'u'
+   lcd_out 'f'
+   lcd_out 'f'
+   lcd_out 'e'
+   lcd_out 'r'
+   lcd_out '#'
+
    rcall buf_loop
    ldi r16,0
    out PORTB,r16
@@ -528,22 +550,27 @@ Bmin:
    LSL numb
    LSL numb
    or numb,r16
-   out DDRD,r16
+   out DDRD,numb
    
-   nop
-   nop
+rcall Del_5ms
 
-   in result,PINB
+   
    in r16,PIND
+   in numb,PINB
    andi r16,0b00000010
    mov oper,r16
+   LSR oper
    
-ret
+   ldi r16,0
+   out DDRD,r16
+rjmp Beq
+
 
 Bcl:
    ldi r16,0x01
    rcall LCD_command_4bit
    rcall LCD_mod_gui
+   ldi numb,0
 rjmp loop
 
 Beq:
@@ -563,6 +590,24 @@ mov result,numb
 rjmp loop
 
 Badd:
+   ldi r16,0x01
+   rcall LCD_command_4bit
+   Set_cursor 0,0
+   lcd_out 'a'
+   lcd_out 'd'
+   lcd_out 'd'
+   lcd_out ' '
+   lcd_out 't'
+   lcd_out 'o'
+   lcd_out ' '
+   lcd_out 'b'
+   lcd_out 'u'
+   lcd_out 'f'
+   lcd_out 'f'
+   lcd_out 'e'
+   lcd_out 'r'
+   lcd_out '#'
+   
    rcall buf_loop
       ldi r16,255
       out PORTB ,r16
@@ -589,8 +634,10 @@ Badd:
       
       ldi r16,0
       out DDRD,r16
+      ldi r16,0
       out DDRB,r16
-ret
+rjmp Bcl
+
 
 buf_loop:
 ldi numb,0
