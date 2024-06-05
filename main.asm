@@ -22,7 +22,6 @@
 
 ;define for logic
 .def end = r21
-.def buff = r23
 .def numb = r24
 .def oper = r25
 .def result = r27
@@ -48,7 +47,8 @@
    rcall LCD_data
 
    wait_end_out:
-      IN r16,PIND
+      IN r16,PINC
+      andi r16,0b00001111
       ORI r16,0
       BRNE wait_end_out
       
@@ -407,21 +407,25 @@ line_D:
    rjmp chekBcl
    rcall Bcl
    chekBcl:
+   
    ldi r17,0b00000100
    CPSE r17,r16
    rjmp chekB0
    rcall B0
    chekB0:
+   
    ldi r17,0b00001000
    CPSE r17,r16   
    rjmp chekBeq
    rjmp Beq
    chekBeq:
+   
    ldi r17,0b00001100
    CPSE r17,r16
    rjmp chekBadd
    rjmp Badd
    chekBadd:
+   
 rjmp loop
 
 
@@ -545,15 +549,11 @@ Bmin:
    out PORTB,r16
    CBI PORTD,1
 
-   mov r16,numb
-   swap r16
-   LSL numb
-   LSL numb
-   or numb,r16
+
+   swap numb
    out DDRD,numb
    
-rcall Del_5ms
-
+   rcall Del_500ms
    
    in r16,PIND
    in numb,PINB
@@ -613,15 +613,10 @@ Badd:
       out PORTB ,r16
       out DDRB,result
       SBI PORTD,1
-
-      mov r16,numb
-      swap r16
-      LSL r16
-      LSL r16
       
+      swap numb
       LSL numb
       LSL numb
-      or numb,r16
       out DDRD,numb
       
       SBRC oper,0
@@ -633,9 +628,12 @@ Badd:
       rcall Del_500ms
       
       ldi r16,0
-      out DDRD,r16
-      ldi r16,0
       out DDRB,r16
+      CBI DDRD,7
+      CBI DDRD,6
+      rcall Del_500ms
+      ldi r16,0
+      out DDRD,r16
 rjmp Bcl
 
 
