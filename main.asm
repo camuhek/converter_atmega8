@@ -1,8 +1,3 @@
-;***************************�������� ������***************************
-;https://radioparty.ru/programming/avr/c/258-lcd-avr-lesson1 
-;https://dims.petrsu.ru/posob/avrlab/avrasm-rus.htm
-;*********************************************************************
-
 .device ATmega8
 .include "m8def.inc"
 .ORG 0x00 rjmp RESET
@@ -30,13 +25,7 @@
    push r16
    ldi r16,@0
    rcall LCD_data
-
-   wait_end_out:
-      IN r16,PINC
-      andi r16,0b00001111
-      ORI r16,0
-      BRNE wait_end_out
-      
+   rcall wait_end_out
    rcall Del_5ms
    pop r16
 .endm
@@ -45,13 +34,7 @@
    push r16
    mov r16,@0
    rcall LCD_data
-
-   wait_end_out:
-      IN r16,PINC
-      andi r16,0b00001111
-      ORI r16,0
-      BRNE wait_end_out
-      
+   rcall wait_end_out
    rcall Del_5ms
    pop r16
 .endm
@@ -66,11 +49,18 @@
 
 .macro Set_cursor
    push r16 
-   ldi r16,(1<<7)|(@0<<6)+@1;������ ������ @0(0-1) ������� @1(0-15)
+   ldi r16,(1<<7)|(@0<<6)+@1;?????? ?????? @0(0-1) ??????? @1(0-15)
    rcall LCD_command_4bit 
    rcall Del_5ms
    pop r16
 .endm
+
+wait_end_out:
+   IN r16,PINC
+   andi r16,0b00001111
+   ORI r16,0
+   BRNE wait_end_out
+ret
 
 RESET:
    ldi r16,high(RAMEND)
@@ -103,28 +93,19 @@ loop:
    SBRC r17,0
    rjmp line_A
 
-   ldi r17,1
-   CPSE r17,r18
-   rjmp chek1
+   CPI r18,1
+   brne PC+2
    rcall line_B
-   chek1:
    
-   ldi r17,2
-   CPSE r17,r18
-   rjmp chek2
+   CPI r18, 2
+   brne PC+2
    rcall line_C
-   chek2:
    
-   ldi r17,3
-   CPSE r17,r18
-   rjmp chek3
+   CPI r18,3
+   brne PC+2
    rcall line_D
-   chek3:
    
 rjmp loop
-
-
-
 
 init_LCD:
    cbr data,E
@@ -167,9 +148,7 @@ LCD_command:
    rcall TWI_Start 
    rcall waitEnd
    nop
-   nop
-   nop
-   nop
+   
    cbr data,E
    rcall TWI_Start 
    rcall waitEnd
@@ -184,15 +163,10 @@ LCD_command_4bit:
    rcall TWI_Start 
    rcall waitEnd
    nop
-   nop
-   nop
-   nop
+
    cbr data,E
    rcall TWI_Start 
    rcall waitEnd
-   nop
-   nop
-   nop
    nop
    
    swap r20
@@ -202,15 +176,12 @@ LCD_command_4bit:
    rcall TWI_Start 
    rcall waitEnd
    nop
-   nop
-   nop
-   nop
+
    cbr data,E
    rcall TWI_Start 
    rcall waitEnd
    rcall Del_5ms
 ret
-
 
 LCD_data:
    mov r20,r16
@@ -220,15 +191,10 @@ LCD_data:
    rcall TWI_Start 
    rcall waitEnd
    nop
-   nop
-   nop
-   nop
+
    cbr data,E
    rcall TWI_Start 
    rcall waitEnd
-   nop
-   nop
-   nop
    nop
    
    swap r20
@@ -238,9 +204,7 @@ LCD_data:
    rcall TWI_Start 
    rcall waitEnd
    nop
-   nop
-   nop
-   nop
+
    cbr data,E
    rcall TWI_Start 
    rcall waitEnd
@@ -266,9 +230,49 @@ LCD_mod_gui:
    lcd_out 't'
    lcd_out 'o'
    lcd_out '1'
-   lcd_out '6'  
+   lcd_out '6' 
+
+   guiloop:
+      in r16,PINC
+      in r17,PIND
+      andi r17,0b00000001
+      andi r16,0b00001111
+      swap r17
+      or r16,r17
+
+      ldi r17,0b00001101
+      eor r17,r16
+      BREQ Bx
+      
+      ldi r17,0b00011100
+      eor r17,r16
+      BREQ Bdel
+
+      CPi r16,0b00001111
+      brne PC+2
+      rjmp Badd
+
+      CPi r16,0b00001110
+      brne PC+2
+      rjmp Bmin
+   
+   rjmp guiloop
+  
 ret
 
+Bdel:
+   rcall LCD_enter_gui
+   ldi oper,0
+   
+ldi r16,0
+rjmp loop
+
+Bx:
+   rcall LCD_enter_gui
+   ldi oper,1
+   
+ldi r16,0
+rjmp loop
 
 TWI_Start:
    ldi end,0
@@ -320,111 +324,72 @@ ret
 ;***********************************************************************************
 
 line_A:
-   ldi r17,0
-   CPSE r17,r16
-   rjmp chekB7
+
+   CPi r16,0
+   brne PC+2
    rcall B7
-   chekB7:
    
-   ldi r17,0b00000100
-   CPSE r17,r16
-   rjmp chekB8
+   CPi r16,0b00000100
+   brne PC+2
    rcall B8
-   chekB8:
    
-   ldi r17,0b00001000
-   CPSE r17,r16
-   rjmp chekB9
+   CPi r16,0b00001000
+   brne PC+2
    rcall B9
-   chekB9:
    
-   ldi r17,0b00001100
-   CPSE r17,r16
-   rjmp chekBdel
-   rcall Bdel
-   chekBdel:
 rjmp loop
 
 line_B:
-   ldi r17,0
-   CPSE r17,r16
-   rjmp chekB4
+CPi r16,0
+   brne PC+2
    rcall B4
-   chekB4:
    
-   ldi r17,0b00000100
-   CPSE r17,r16
-   rjmp chekB5
+   CPi r16,0b00000100
+   brne PC+2
    rcall B5
-   chekB5:
    
-   ldi r17,0b00001000
-   CPSE r17,r16
-   rjmp chekB6
+   CPi r16,0b00001000
+   brne PC+2
    rcall B6
-   chekB6:
-   
-   ldi r17,0b00001100
-   CPSE r17,r16
-   rjmp chekBx
-   rcall Bx
-   chekBx:
-   
  
 rjmp loop
 
 line_C:
 
-   ldi r17,0
-   CPSE r17,r16
-   rjmp chekB1
+   CPi r16,0
+   brne PC+2
    rcall B1
-   chekB1:
    
-   ldi r17,0b00000100
-   CPSE r17,r16
-   rjmp chekB2
+   CPi r16,0b00000100
+   brne PC+2
    rcall B2
-   chekB2:
    
-   ldi r17,0b00001000
-   CPSE r17,r16
-   rjmp chekB3
+   CPi r16,0b00001000
+   brne PC+2
    rcall B3
-   chekB3:
    
-   ldi r17,0b00001100
-   CPSE r17,r16
-   rjmp chekBmin
-   rjmp Bmin
-   chekBmin:
+   CPi r16,0b00001100
+   brne PC+2
+   rcall Bmin
    
 rjmp loop
 
 line_D:
-   ldi r17,0
-   CPSE r17,r16
-   rjmp chekBcl
+   CPi r16,0
+   brne PC+2
    rcall Bcl
-   chekBcl:
    
-   ldi r17,0b00000100
-   CPSE r17,r16
-   rjmp chekB0
+   CPi r16,0b00000100
+   brne PC+2
    rcall B0
-   chekB0:
    
-   ldi r17,0b00001000
-   CPSE r17,r16   
-   rjmp chekBeq
-   rjmp Beq
-   chekBeq:
+   CPi r16,0b00001000
+   brne PC+2
+   rcall Beq
    
-   ldi r17,0b00001100
-   CPSE r17,r16
-   rjmp chekBadd
-   rjmp Badd
-   chekBadd:
+   CPi r16,0b00001100
+   brne PC+2
+   rcall Badd
    
 rjmp loop
 
@@ -464,16 +429,15 @@ ret
 
 B5:
    lcd_out '5'
-      multiplay10
+   multiplay10
    ldi r16,5
    add numb,r16
    ldi r16,0
 ret
 
-
 B6:
    lcd_out '6'
-      multiplay10
+   multiplay10
    ldi r16,6
    add numb,r16
    ldi r16,0
@@ -487,10 +451,9 @@ B7:
    ldi r16,0
 ret
 
-
 B8:
    lcd_out '8'
-      multiplay10
+   multiplay10
    ldi r16,8
    add numb,r16
    ldi r16,0
@@ -498,29 +461,29 @@ ret
 
 B9:
    lcd_out '9'
-      multiplay10
+   multiplay10
    ldi r16,9
    add numb,r16
    ldi r16,0
 ret
    
-Bdel:
+LCD_enter_gui:
    ldi r16,0x01
    rcall LCD_command_4bit
    set_cursor 0,0
-   ldi oper,0
-   
-ldi r16,0
-ret
 
-Bx:
-   ldi r16,0x01
-   rcall LCD_command_4bit
-   set_cursor 0,0
-   ldi oper,1
-   
-ldi r16,0
-ret
+   lcd_out 'E'
+   lcd_out 'n'
+   lcd_out 't'
+   lcd_out 'e'
+   lcd_out 'r'
+   lcd_out ' '
+   lcd_out 'n'
+   lcd_out 'u'
+   lcd_out 'm'
+   lcd_out 'b'
+   lcd_out ':'
+ret   
 
 Bmin:
    ldi r16,0x01
@@ -549,7 +512,6 @@ Bmin:
    out PORTB,r16
    CBI PORTD,1
 
-
    swap numb
    out DDRD,numb
    
@@ -565,7 +527,6 @@ Bmin:
    out DDRD,r16
 rjmp Beq
 
-
 Bcl:
    ldi r16,0x01
    rcall LCD_command_4bit
@@ -574,19 +535,20 @@ Bcl:
 rjmp loop
 
 Beq:
-Set_cursor 1,0
-lcd_out 'r'
-lcd_out 'e'
-lcd_out 's'
-lcd_out 'u'
-lcd_out 'l'
-lcd_out 't'
-lcd_out ':'
-mov result,numb
-   SBRS oper,0
-      rjmp to2
-   SBRC oper,0
-      rjmp to16
+   Set_cursor 1,0
+   lcd_out 'r'
+   lcd_out 'e'
+   lcd_out 's'
+   lcd_out 'u'
+   lcd_out 'l'
+   lcd_out 't'
+   lcd_out ':'
+
+   mov result,numb
+      SBRS oper,0
+	 rjmp to2
+      SBRC oper,0
+	 rjmp to16
 rjmp loop
 
 Badd:
@@ -636,35 +598,34 @@ Badd:
       out DDRD,r16
 rjmp Bcl
 
-
 buf_loop:
 ldi numb,0
    loop2:
       in r16,PINC
       andi r16,0b00001111
 
-      ldi r17,0b00001010
-      CPSE r17,r16
-      rjmp not3
+      CPi r16,0b00001010
+      brne PC+3
          ldi numb,3
          rjmp finishLoop2
-      not3:
 
-      ldi r17,0b00000110
-      CPSE r17,r16
-      rjmp not2
+
+      CPi r16,0b00000110
+      brne PC+3
          ldi numb,2
          rjmp finishLoop2
-      not2:
 
-      ldi r17,0b00000010
-      CPSE r17,r16
-      rjmp not1
+      CPi r16,0b00000010
+      brne PC+3
          ldi numb,1
          rjmp finishLoop2
-      not1:
+
+      CPi r16,0b00000011
+      brne PC+2
+         rjmp Bcl
+
    rjmp loop2
-   finishLoop2:
+finishLoop2:
 ret
 
 buf16:
@@ -749,7 +710,7 @@ to2:
       ldi numb,0
 rjmp loop
 
-;**************delay(��� 4MHz)****************************************************
+;**************delay(for 4MHz)****************************************************
 Del_150mks:
 cli 
    push	Razr0
